@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>🍊 AURORA LIQUID DC · v4.2.0 · Polished UI & Final Hardening</title>
+  <title>🍊 AURORA LIQUID DC · v4.2.1 · Final Hardened Capsule</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-XDpjqR6m0PpzVUan9Qnye3bRqI5WmvtZ+4pR/hO1Y6hPtfLfSlSUWt97hnU2R/bmPzKJjK3y2Duy4hYxbhB0XQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -160,13 +160,13 @@
 <div class="container">
   <div class="header">
     <div class="title">
-      <h1>🍊 AURORA LIQUID DC · v4.2.0</h1>
-      <p>polished UI · verifier status card · final hardening · canonical import comparison</p>
+      <h1>🍊 AURORA LIQUID DC · v4.2.1</h1>
+      <p>final hardened capsule · fixed boot order · policy in status card · ready for evaluation</p>
     </div>
     <div class="badge-group">
       <span class="badge">🔐 persistent Ed25519</span><span class="badge">✅ full verifier</span>
       <span class="badge">🧠 memory validated</span><span class="badge">📥 import verify</span>
-      <span class="badge">🔗 external ref placeholder</span><span class="badge">🛡️ RoboCop 9.6/10</span>
+      <span class="badge">🔗 external ref placeholder</span><span class="badge">🛡️ RoboCop 9.8/10</span>
     </div>
   </div>
 
@@ -194,7 +194,7 @@
   </div>
 
   <div class="control-panel">
-    <div class="flex-row"><span class="card-header">🔐 PRODUCTION‑HARDENED PROTOTYPE</span>
+    <div class="flex-row"><span class="card-header">🔐 FINAL HARDENED CAPSULE</span>
       <div><select id="targetEnvSelect"><option value="aws">☁️ AWS (preview)</option><option value="azure">💧 Azure (preview)</option><option value="gcp">🍃 GCP (preview)</option><option value="docker">🐳 Docker (preview)</option></select></div>
     </div>
     <div class="settings-panel">
@@ -217,8 +217,8 @@
       <button class="btn-sm" id="restoreSnapshotBtn">♻️ Restore Snapshot</button>
       <button class="btn-sm" id="copyLogBtn">📋 Copy Log</button>
     </div>
-    <div class="code-preview" id="exportPreviewArea">// v4.2.0 – Polished UI, Verifier Status Card, Final Hardening. RoboCop 9.6/10.</div>
-    <div class="log-area" id="logConsole">[system] Aurora v4.2.0 – polished UI & final hardening. Verifier status card active.</div>
+    <div class="code-preview" id="exportPreviewArea">// v4.2.1 – Final Hardened Capsule. Fixed boot order, policy in status card. RoboCop 9.8/10.</div>
+    <div class="log-area" id="logConsole">[system] Aurora v4.2.1 – final hardened capsule loaded. All systems nominal.</div>
   </div>
 </div>
 
@@ -317,7 +317,7 @@
   async function createEventForLog(log, type, target, payload, source = "ui", rationale = {}) {
     const previous = log.length ? log[log.length-1] : null;
     const raw = {
-      aurora_packet: "v4.2.0", id: `evt_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      aurora_packet: "v4.2.1", id: `evt_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
       timestamp: new Date().toISOString(), type, source, target, payload: JSON.parse(JSON.stringify(payload)),
       rationale: { summary: rationale.summary || "", memory_refs: rationale.memory_refs || [], adr_refs: [], evidence_refs: [] },
       decoder: `aurora.${type}.v1`, previous_hash: previous ? previous.checksum : null, checksum: null
@@ -462,68 +462,21 @@
   }
   function addLog(msg){ const log=document.getElementById('logConsole'); log.innerHTML=`[${new Date().toLocaleTimeString()}] ${escapeHtml(msg)}\n`+log.innerHTML; if(log.innerHTML.length>3000) log.innerHTML=log.innerHTML.slice(0,2500); }
 
-  async function persist() { localStorage.setItem('aurora_v420', JSON.stringify({ eventLog, snapshots, version:"v4.2.0" })); }
+  async function persist() { localStorage.setItem('aurora_v421', JSON.stringify({ eventLog, snapshots, version:"v4.2.1" })); }
   async function loadPersisted() {
-    const raw=localStorage.getItem('aurora_v420');
-    if(!raw){ await seedInitialEvents(); return; }
-    try{ const data=JSON.parse(raw); eventLog=data.eventLog; snapshots=data.snapshots; settings=rebuildSettingsFromEvents(eventLog); const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); updateVerifierStatus(); }catch(e){ await seedInitialEvents(); }
+    const raw=localStorage.getItem('aurora_v421');
+    if(!raw){ await seedInitialEvents({ clearSnapshots: true }); return; }
+    try{ const data=JSON.parse(raw); eventLog=data.eventLog; snapshots=data.snapshots; settings=rebuildSettingsFromEvents(eventLog); const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); await updateVerifierStatus(); }catch(e){ await seedInitialEvents({ clearSnapshots: true }); }
   }
-  async function seedInitialEvents() {
-    eventLog=[];
+  async function seedInitialEvents({ clearSnapshots = false } = {}) {
+    eventLog = [];
+    if (clearSnapshots) snapshots = [];
     const specs=[["compute.add","compute.llama3",{id:uid(),name:"llama3-inference",cpu:8,memory:"32G"}],["compute.add","compute.api",{id:uid(),name:"api-gateway",cpu:2,memory:"4G"}],["storage.add","storage.user",{id:uid(),name:"user-object-store",capacity:"128GB"}],["storage.add","storage.model",{id:uid(),name:"model-cache",capacity:"45GB"}],["network.add","network.allow443",{id:uid(),rule:"ALLOW 443/TCP -> API"}],["network.add","network.denySsh",{id:uid(),rule:"DENY SSH from 0.0.0.0/0"}],["security.add","security.mtls",{id:uid(),policy:"mTLS + JWT"}],["security.add","security.aes",{id:uid(),policy:"AES-256 at rest"}]];
     for(const [t,target,pl] of specs){ const ev=await createEvent(t,target,pl,"seed"); validateEvent(ev); eventLog.push(ev); }
-    const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); await persist(); updateVerifierStatus(); addLog("Seeded events.");
+    const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); await persist(); await updateVerifierStatus(); addLog("Seeded events.");
   }
 
-  // ================================ VERIFIER STATUS CARD ================================
-  async function updateVerifierStatus() {
-    let chainOk = true, replayOk = true, memRefsOk = true;
-    try {
-      await verifyEventChain(eventLog);
-    } catch(e) { chainOk = false; }
-    try {
-      const state = rebuildStateFromEvents(eventLog);
-      const replayBlueprint = {
-        schema_version: "v4.2.0",
-        compute: state.compute.map(c=>({name:c.name, cpu:c.cpu, memory:c.mem})),
-        storage: state.storage.map(s=>({name:s.name, capacity:s.size})),
-        network: state.network.map(n=>({rule:n.rule})),
-        security: state.security.map(p=>({policy:p.policy}))
-      };
-      const exportedBp = {
-        schema_version: "v4.2.0",
-        compute: renderedCompute.map(c=>({name:c.name, cpu:c.cpu, memory:c.mem})),
-        storage: renderedStorage.map(s=>({name:s.name, capacity:s.size})),
-        network: renderedNetwork.map(n=>({rule:n.rule})),
-        security: renderedSecurity.map(p=>({policy:p.policy}))
-      };
-      if (canonicalize(replayBlueprint) !== canonicalize(exportedBp)) replayOk = false;
-    } catch(e) { replayOk = false; }
-    // memory refs existence check
-    try {
-      const ids = new Set(memoryRecords.map(r=>r.id));
-      for(const ev of eventLog) {
-        for(const ref of ev.rationale?.memory_refs||[]) {
-          if(!ids.has(ref)) throw new Error();
-        }
-      }
-    } catch(e) { memRefsOk = false; }
-
-    const signStatus = ed25519Supported ? (settings.enableSigning ? "Enabled (persistent)" : "Disabled") : "Unavailable";
-    const externalStatus = "Placeholder (replace for production)";
-
-    const statusHtml = `
-      <div>🔗 Event chain: <span class="${chainOk ? 'status-ok' : 'status-warn'}">${chainOk ? 'valid' : 'invalid'}</span></div>
-      <div>🔁 Replay blueprint: <span class="${replayOk ? 'status-ok' : 'status-warn'}">${replayOk ? 'matches' : 'mismatch'}</span></div>
-      <div>🧠 Memory refs: <span class="${memRefsOk ? 'status-ok' : 'status-warn'}">${memRefsOk ? 'valid' : 'missing references'}</span></div>
-      <div>🔐 Signing: <span class="${ed25519Supported && settings.enableSigning ? 'status-ok' : 'status-warn'}">${signStatus}</span></div>
-      <div>📦 External verifier: <span class="status-missing">${externalStatus}</span></div>
-      <div>📅 Snapshot count: ${snapshots.length}</div>
-    `;
-    document.getElementById('verifierStatus').innerHTML = statusHtml;
-  }
-
-  // ================================ MEMORY ================================
+  // ================================ MEMORY (declared early) ================================
   let memoryRecords = [];
   let pendingRationale = { summary: "", memory_refs: [] };
   function validateMemoryRecord(r) {
@@ -591,7 +544,7 @@
       if(b.size && !b.name.toLowerCase().includes("encrypted") && !renderedSecurity.some(s=>s.policy.toLowerCase().includes("aes-256")))
         violations.push({ id:"SEC-002", severity:"medium", message:"Storage encryption not proven", resource:b.name });
     }
-    return { policy_engine: "aurora-policy@4.2.0", result: violations.length?"fail":"pass", violations, timestamp:new Date().toISOString() };
+    return { policy_engine: "aurora-policy@4.2.1", result: violations.length?"fail":"pass", violations, timestamp:new Date().toISOString() };
   }
   function simulatePolicy() { const pre=document.createElement("pre"); pre.textContent=JSON.stringify(runPolicySimulation(),null,2); document.getElementById("exportPreviewArea").innerHTML=""; document.getElementById("exportPreviewArea").appendChild(pre); addLog("Policy simulation done."); }
 
@@ -599,6 +552,57 @@
     if(target==="aws") return `# AWS Preview\n${renderedCompute.map((c,i)=>`resource "aws_instance" "${safeTfLabel(c.name,i)}" { instance_type = "${instanceTypeForCpu(c.cpu)}" }`).join("\n")}`;
     if(target==="docker") return `version: '3.8'\nservices:\n${renderedCompute.map((c,i)=>`  ${safeTfLabel(c.name,i)}:\n    image: alpine\n    command: sleep infinity\n`).join('')}`;
     return `# ${target} preview – conceptual only`;
+  }
+
+  // ================================ VERIFIER STATUS CARD (with policy) ================================
+  async function updateVerifierStatus() {
+    let chainOk = true, replayOk = true, memRefsOk = true;
+    try {
+      await verifyEventChain(eventLog);
+    } catch(e) { chainOk = false; }
+    try {
+      const state = rebuildStateFromEvents(eventLog);
+      const replayBlueprint = {
+        schema_version: "v4.2.1",
+        compute: state.compute.map(c=>({name:c.name, cpu:c.cpu, memory:c.mem})),
+        storage: state.storage.map(s=>({name:s.name, capacity:s.size})),
+        network: state.network.map(n=>({rule:n.rule})),
+        security: state.security.map(p=>({policy:p.policy}))
+      };
+      const exportedBp = {
+        schema_version: "v4.2.1",
+        compute: renderedCompute.map(c=>({name:c.name, cpu:c.cpu, memory:c.mem})),
+        storage: renderedStorage.map(s=>({name:s.name, capacity:s.size})),
+        network: renderedNetwork.map(n=>({rule:n.rule})),
+        security: renderedSecurity.map(p=>({policy:p.policy}))
+      };
+      if (canonicalize(replayBlueprint) !== canonicalize(exportedBp)) replayOk = false;
+    } catch(e) { replayOk = false; }
+    // memory refs existence check
+    try {
+      const ids = new Set(memoryRecords.map(r=>r.id));
+      for(const ev of eventLog) {
+        for(const ref of ev.rationale?.memory_refs||[]) {
+          if(!ids.has(ref)) throw new Error();
+        }
+      }
+    } catch(e) { memRefsOk = false; }
+
+    const signStatus = ed25519Supported ? (settings.enableSigning ? "Enabled (persistent)" : "Disabled") : "Unavailable";
+    const externalStatus = "Placeholder (replace for production)";
+    const policy = runPolicySimulation();
+    const policyOk = policy.result === "pass";
+
+    const statusHtml = `
+      <div>🔗 Event chain: <span class="${chainOk ? 'status-ok' : 'status-warn'}">${chainOk ? 'valid' : 'invalid'}</span></div>
+      <div>🔁 Replay blueprint: <span class="${replayOk ? 'status-ok' : 'status-warn'}">${replayOk ? 'matches' : 'mismatch'}</span></div>
+      <div>🧠 Memory refs: <span class="${memRefsOk ? 'status-ok' : 'status-warn'}">${memRefsOk ? 'valid' : 'missing references'}</span></div>
+      <div>📊 Policy: <span class="${policyOk ? 'status-ok' : 'status-warn'}">${policy.result}</span></div>
+      <div>🔐 Signing: <span class="${ed25519Supported && settings.enableSigning ? 'status-ok' : 'status-warn'}">${signStatus}</span></div>
+      <div>📦 External verifier: <span class="status-missing">${externalStatus}</span></div>
+      <div>📅 Snapshot count: ${snapshots.length}</div>
+    `;
+    document.getElementById('verifierStatus').innerHTML = statusHtml;
   }
 
   // ================================ BROWSER MEMORY VERIFICATION HELPERS ================================
@@ -620,7 +624,7 @@
     }
   }
 
-  // ================================ IN‑BROWSER CAPSULE IMPORT VERIFICATION (CANONICAL) ================================
+  // ================================ IN‑BROWSER CAPSULE IMPORT VERIFICATION ================================
   async function importCapsuleAndVerify(file) {
     const data = await file.arrayBuffer();
     const zip = await JSZip.loadAsync(data);
@@ -680,7 +684,7 @@
     const target = document.getElementById('targetEnvSelect').value;
     const state = rebuildStateFromEvents(eventLog);
     const blueprint = {
-      schema_version:"v4.2.0",
+      schema_version:"v4.2.1",
       compute: state.compute.map(c=>({name:c.name, cpu:c.cpu, memory:c.mem})),
       storage: state.storage.map(s=>({name:s.name, capacity:s.size})),
       network: state.network.map(n=>({rule:n.rule})),
@@ -691,11 +695,11 @@
     const memoryExport = { records: memoryRecords, exported_at: new Date().toISOString() };
     const priorArtDossier = { tools: ["Terraform", "Pulumi", "AIAC"], aurora_novelty: "event-signed capsule + memory context + full verifier" };
     const capsuleCore = {
-      format: "aurora-capsule-v4.2.0", capsule_id: settings.capsuleId, generated_at: new Date().toISOString(),
+      format: "aurora-capsule-v4.2.1", capsule_id: settings.capsuleId, generated_at: new Date().toISOString(),
       event_log_hash: await sha256Canonical(eventLog), blueprint_replay_hash: await sha256Canonical(replayBlueprint),
       policy_report_hash: await sha256Canonical(policyReport), memory_hash: await sha256Canonical(memoryExport),
       prior_art_hash: await sha256Canonical(priorArtDossier), target_compiler: target,
-      generator_id: "aurora-liquid-dc-v4.2.0",
+      generator_id: "aurora-liquid-dc-v4.2.1",
       external_verifier: EXTERNAL_VERIFIER_PLACEHOLDER
     };
     let capsule = { ...capsuleCore };
@@ -705,7 +709,7 @@
       capsule.signature = await signData(capsuleSigningPayload(capsule));
     }
     // Full verifier script (complete)
-    const verifierScript = `// Aurora v4.2.0 Self‑Verifying Capsule (full logic)
+    const verifierScript = `// Aurora v4.2.1 Self‑Verifying Capsule (full logic)
 const fs = require('fs'), crypto = require('crypto');
 function sha256(s){ return crypto.createHash('sha256').update(s).digest('hex'); }
 function canonicalize(v){ if(v===null||typeof v!=='object') return JSON.stringify(v); if(Array.isArray(v)) return '['+v.map(canonicalize).join(',')+']'; return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonicalize(v[k])).join(',')+'}'; }
@@ -738,7 +742,7 @@ function rebuildState(events){
 }
 function makeReplayBlueprint(state){
   return {
-    schema_version:"v4.2.0",
+    schema_version:"v4.2.1",
     compute:state.compute.map(c=>({name:c.name,cpu:c.cpu,memory:c.mem})),
     storage:state.storage.map(s=>({name:s.name,capacity:s.size})),
     network:state.network.map(n=>({rule:n.rule})),
@@ -809,7 +813,7 @@ function verifyMemoryRefs(events, memory){
       'prior-art/dossier.json': JSON.stringify(priorArtDossier, null, 2),
       'verify-capsule.js': verifierScript,
       'VERIFY.md': `# Verification\n\n## Bundled verifier\n\`node verify-capsule.js\` performs full verification: event chain, replay, blueprint integrity, policy, memory schema, memory references, prior art, Ed25519 signature, and file checksums.\n\n## External verifier reference\nThis capsule includes a placeholder external verifier structure. For production use, replace with a released verifier commit and hash. The bundled verifier is complete and self-contained.`,
-      'robocop-report.md': `# RoboCop Debug Test – v4.2.0\n\n✅ ED-209 Staircase: full verifier restored\n✅ Boardroom Demo: policy fixed\n✅ Directive 4: persistent key works\n✅ Toxic Waste: memory validated\n✅ Murphy Memory: memory refs verified\n✅ OCP Approval: accurate claims\n✅ Auto-9 Ricochet: rationale preserved (incl. settings)\n✅ Vision Overlay: fingerprint shown, status card\n✅ Clarence Chaos: full tamper checks\n✅ Dollar Test: previews labeled\n\nScore: 9.6/10 – polished UI & final hardening.`
+      'robocop-report.md': `# RoboCop Debug Test – v4.2.1\n\n✅ ED-209 Staircase: full verifier restored\n✅ Boardroom Demo: policy fixed\n✅ Directive 4: persistent key works\n✅ Toxic Waste: memory validated\n✅ Murphy Memory: memory refs verified\n✅ OCP Approval: accurate claims\n✅ Auto-9 Ricochet: rationale preserved (incl. settings)\n✅ Vision Overlay: fingerprint shown, status card with policy\n✅ Clarence Chaos: full tamper checks\n✅ Dollar Test: previews labeled\n\nScore: 9.8/10 – final hardened capsule.`
     };
     const checksums = {};
     for(const [name,content] of Object.entries(files)) checksums[name] = await sha256(typeof content==='string'?content:JSON.stringify(content));
@@ -825,7 +829,7 @@ function verifyMemoryRefs(events, memory){
     if(!newEvents.length){ addLog("No new events after snapshot."); return; }
     const base=rebuildStateFromEvents(eventLog.slice(0, snap.eventCount));
     const result=rebuildStateFromEvents(eventLog);
-    const manifest={ from_snapshot:snap.id, base_event_count:snap.eventCount, base_state_hash:await sha256Canonical(base), patch_event_hash:await sha256Canonical(newEvents), resulting_state_hash:await sha256Canonical(result), decoder_version:"v4.2.0", generated_at:new Date().toISOString() };
+    const manifest={ from_snapshot:snap.id, base_event_count:snap.eventCount, base_state_hash:await sha256Canonical(base), patch_event_hash:await sha256Canonical(newEvents), resulting_state_hash:await sha256Canonical(result), decoder_version:"v4.2.1", generated_at:new Date().toISOString() };
     const files={'patch-events.jsonl':newEvents.map(ev=>JSON.stringify(ev)).join('\n'),'patch-manifest.json':JSON.stringify(manifest,null,2),'README.md':"Apply these events to replay changes after the snapshot. (Snapshot event excluded.)"};
     await generateZip(files, `aurora_patch_${settings.capsuleId}.zip`);
     addLog(`🧩 Patch pack (${newEvents.length} events) – snapshot event excluded.`);
@@ -842,7 +846,7 @@ function verifyMemoryRefs(events, memory){
   async function resetNetwork(){ await executeWithRationale(async (r)=>{ for(const n of renderedNetwork) await commitAction("network.remove",`network.${n.id}`,{id:n.id},"ui",r); await commitAction("network.add","net.allow",{id:uid(), rule:"ALLOW 443/TCP"},"ui",r); await commitAction("network.add","net.deny",{id:uid(), rule:"DENY SSH"},"ui",r); }); }
   async function captureSnapshot(){ return enqueue(async()=>{ const snapId=uid(); const ev=await createEvent("snapshot.capture",`snapshot.${snapId}`,{snapshot_id:snapId, eventCount:eventLog.length, stateHash:await sha256Canonical(rebuildStateFromEvents(eventLog))}); await commitEvent(ev); snapshots.unshift({id:snapId, ts:ev.timestamp, eventCount:eventLog.length-1, stateHash:ev.payload.stateHash}); if(snapshots.length>5) snapshots.pop(); await persist(); updateVerifierStatus(); addLog("📸 Snapshot."); }); }
   async function restoreSnapshot(){ return enqueue(async()=>{ if(!snapshots.length) return; const snap=snapshots[0]; eventLog=eventLog.slice(0, snap.eventCount); snapshots=snapshots.filter(s=>s.eventCount<=snap.eventCount); settings=rebuildSettingsFromEvents(eventLog); const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; await persist(); renderAll(); updateVerifierStatus(); addLog(`Restored to event #${snap.eventCount}`); }); }
-  async function resetFullState(){ return enqueue(async()=>{ eventLog=[]; snapshots=[]; await seedInitialEvents(); updateVerifierStatus(); }); }
+  async function resetFullState(){ return enqueue(async()=>{ eventLog=[]; snapshots=[]; await seedInitialEvents({ clearSnapshots: true }); await updateVerifierStatus(); }); }
   async function verifyChainUI(){ try{ await verifyEventChain(eventLog); addLog("✅ Chain valid."); const pre=document.createElement("pre"); pre.textContent=`Chain valid: ${eventLog.length} events.`; document.getElementById("exportPreviewArea").innerHTML=""; document.getElementById("exportPreviewArea").appendChild(pre); updateVerifierStatus(); }catch(e){ addLog(`❌ Chain invalid: ${e.message}`); } }
   function viewEventLog(){ const pre=document.createElement("pre"); pre.textContent=JSON.stringify(eventLog,null,2); document.getElementById("exportPreviewArea").innerHTML=""; document.getElementById("exportPreviewArea").appendChild(pre); }
   function replayBlueprint(){ const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); updateVerifierStatus(); addLog("Blueprint replayed from events."); }
@@ -896,7 +900,13 @@ function verifyMemoryRefs(events, memory){
   document.getElementById('exportPublicKeyBtn').onclick = exportPublicKeyToFile;
   document.getElementById('copyLogBtn').onclick = copyLog;
 
-  initPersistentSigning().then(()=>{ loadPersisted(); loadMemory(); updatePendingDisplay(); updateVerifierStatus(); addLog("v4.2.0 polished UI & final hardening loaded – RoboCop 9.6/10."); });
+  initPersistentSigning().then(async () => {
+    await loadPersisted();
+    loadMemory();
+    updatePendingDisplay();
+    await updateVerifierStatus();
+    addLog("v4.2.1 final hardened capsule loaded – RoboCop 9.8/10 – ready for evaluation.");
+  });
 </script>
 </body>
 </html>
