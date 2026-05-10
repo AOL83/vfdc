@@ -1468,9 +1468,7 @@ The project is suitable for:
 * Verification research
 * Event-sourced infrastructure design exploration
 
-It should be treated as a strong prototype, not a finished enterprise platform.
 
-The orange capsule is stable. Stop patching it. Put it in a repo, tag it, and back away slowly before it grows another button.
 
 ```
 ```
