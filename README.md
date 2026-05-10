@@ -1,4 +1,4 @@
-Here. A full README for your orange techno-capsule, because apparently the browser needed to cosplay as a tiny infrastructure notary public.
+
 
 ````markdown
 # 🍊 Aurora Liquid DC v4.2.1 — Final Hardened Capsule
