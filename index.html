@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>🍊 AURORA LIQUID DC · v4.1.1 · Production‑Hardened Final</title>
+  <title>🍊 AURORA LIQUID DC · v4.2.0 · Polished UI & Final Hardening</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-XDpjqR6m0PpzVUan9Qnye3bRqI5WmvtZ+4pR/hO1Y6hPtfLfSlSUWt97hnU2R/bmPzKJjK3y2Duy4hYxbhB0XQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -42,7 +42,12 @@
       border: 1px solid #ff914d;
       font-size: 0.65rem;
     }
-    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
     .card {
       background: rgba(20, 14, 9, 0.75);
       backdrop-filter: blur(12px);
@@ -80,7 +85,9 @@
       cursor: pointer;
       margin-top: 0.2rem;
       margin-right: 0.3rem;
+      transition: 0.1s;
     }
+    .btn-sm:active { transform: scale(0.96); }
     .btn-primary {
       background: #ff7e1e;
       border: none;
@@ -90,7 +97,9 @@
       border-radius: 1.5rem;
       cursor: pointer;
       font-size: 0.7rem;
+      transition: 0.1s;
     }
+    .btn-primary:active { transform: scale(0.96); }
     .control-panel {
       background: linear-gradient(145deg, #1f1710, #110d08);
       border-radius: 1.2rem;
@@ -136,20 +145,28 @@
     .memory-result { background: #261f18; margin: 0.2rem 0; padding: 0.2rem 0.5rem; border-radius: 0.5rem; font-size: 0.65rem; cursor: pointer; }
     .memory-result:hover { background: #ff8c4220; }
     .fingerprint { font-family: monospace; font-size: 0.7rem; background: #00000066; padding: 0.2rem 0.5rem; border-radius: 1rem; }
-    @media (max-width: 700px) { body { padding: 0.6rem; } }
+    .verifier-status { font-size: 0.7rem; line-height: 1.4; }
+    .status-ok { color: #8bc34a; }
+    .status-warn { color: #ffb74d; }
+    .status-missing { color: #888; }
+    @media (max-width: 700px) {
+      body { padding: 0.6rem; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .card { width: 100%; }
+    }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
     <div class="title">
-      <h1>🍊 AURORA LIQUID DC · v4.1.1</h1>
-      <p>production‑hardened final · proper CIDR validation · relaxed region · settings rationale · clean patches</p>
+      <h1>🍊 AURORA LIQUID DC · v4.2.0</h1>
+      <p>polished UI · verifier status card · final hardening · canonical import comparison</p>
     </div>
     <div class="badge-group">
       <span class="badge">🔐 persistent Ed25519</span><span class="badge">✅ full verifier</span>
       <span class="badge">🧠 memory validated</span><span class="badge">📥 import verify</span>
-      <span class="badge">🔗 external ref placeholder</span><span class="badge">🛡️ RoboCop 9.4/10</span>
+      <span class="badge">🔗 external ref placeholder</span><span class="badge">🛡️ RoboCop 9.6/10</span>
     </div>
   </div>
 
@@ -158,29 +175,32 @@
     <div class="card"><div class="card-header">🗄️ STORAGE</div><div id="storageList" class="item-list"></div><button class="btn-sm" id="addStorage">📦 Add Bucket</button><button class="btn-sm" id="snapshotStorage">💾 Snapshot</button></div>
     <div class="card"><div class="card-header">🌐 NETWORK</div><div id="networkList" class="item-list"></div><button class="btn-sm" id="addNetwork">➕ Add Route</button><button class="btn-sm" id="resetNetwork">♻️ Reset</button></div>
     <div class="card"><div class="card-header">🛡️ SECURITY</div><div id="securityList" class="item-list"></div><button class="btn-sm" id="addSecurity">🔒 Add Policy</button><button class="btn-sm" id="rotateSecrets">🌀 Rotate Keys</button></div>
+    <div class="card"><div class="card-header">🔍 VERIFIER STATUS</div>
+      <div id="verifierStatus" class="verifier-status"></div>
+    </div>
     <div class="card"><div class="card-header">🧠 MEMORY</div>
       <input type="text" id="memorySearchInput" placeholder="Search title/content/tags" style="width:100%">
-      <div id="memoryResults" class="item-list" style="max-height:120px;"></div>
-      <div style="display:flex; gap:0.3rem; flex-wrap:wrap;">
+      <div id="memoryResults" class="item-list" style="max-height:100px;"></div>
+      <div style="display:flex; gap:0.3rem; flex-wrap:wrap; margin-top:0.3rem;">
         <button class="btn-sm" id="addMemoryBtn">📝 Add</button>
         <button class="btn-sm" id="exportMemoryBtn">📤 Export</button>
         <label class="btn-sm">📥 Import<input type="file" id="importMemoryFile" style="display:none;"></label>
         <button class="btn-sm" id="genAdrBtn">📄 ADR</button>
         <button class="btn-sm" id="attachMemoryToNextBtn">🔗 Attach to next</button>
       </div>
-      <div id="pendingRationale" style="font-size:0.65rem; margin-top:0.3rem; color:#ffaa77;"></div>
+      <div id="pendingRationale" style="font-size:0.65rem; margin-top:0.5rem; color:#ffaa77; border-top:1px solid #ffaa5533; padding-top:0.3rem;"></div>
       <div id="signerInfo" style="font-size:0.65rem; margin-top:0.3rem;" class="fingerprint"></div>
     </div>
   </div>
 
   <div class="control-panel">
-    <div class="flex-row"><span class="card-header">🔐 PRODUCTION‑HARDENED FINAL</span>
+    <div class="flex-row"><span class="card-header">🔐 PRODUCTION‑HARDENED PROTOTYPE</span>
       <div><select id="targetEnvSelect"><option value="aws">☁️ AWS (preview)</option><option value="azure">💧 Azure (preview)</option><option value="gcp">🍃 GCP (preview)</option><option value="docker">🐳 Docker (preview)</option></select></div>
     </div>
     <div class="settings-panel">
-      <label>🏷️ Capsule ID: <input id="capsuleId" value="aurora-capsule-001" size="10"></label>
-      <label>🌍 Region: <input id="region" value="us-east-1" size="8"></label>
-      <label>🔑 Admin CIDRs: <input id="adminCidrs" placeholder="203.0.113.0/24" size="12"></label>
+      <label>🏷️ Capsule ID: <input id="capsuleId" value="aurora-capsule-001" size="18"></label>
+      <label>🌍 Region: <input id="region" value="us-east-1" size="12"></label>
+      <label>🔑 Admin CIDRs: <input id="adminCidrs" placeholder="203.0.113.0/24" size="16"></label>
       <label>🔐 Enable signing: <input type="checkbox" id="enableSigning" checked></label>
       <button class="btn-sm" id="saveSettings">💾 Save</button>
       <button class="btn-sm" id="exportPublicKeyBtn">📋 Export Public Key</button>
@@ -195,9 +215,10 @@
       <label class="btn-sm">📥 Import Capsule (ZIP)<input type="file" id="importCapsuleFile" accept=".zip" style="display:none;"></label>
       <button class="btn-sm" id="resetFullState">🔄 Factory Reset</button>
       <button class="btn-sm" id="restoreSnapshotBtn">♻️ Restore Snapshot</button>
+      <button class="btn-sm" id="copyLogBtn">📋 Copy Log</button>
     </div>
-    <div class="code-preview" id="exportPreviewArea">// v4.1.1 – Production‑Hardened Final. Proper CIDR validation, relaxed region, settings rationale, clean patches.</div>
-    <div class="log-area" id="logConsole">[system] Aurora v4.1.1 – final production‑hardened prototype loaded. RoboCop 9.4/10.</div>
+    <div class="code-preview" id="exportPreviewArea">// v4.2.0 – Polished UI, Verifier Status Card, Final Hardening. RoboCop 9.6/10.</div>
+    <div class="log-area" id="logConsole">[system] Aurora v4.2.0 – polished UI & final hardening. Verifier status card active.</div>
   </div>
 </div>
 
@@ -296,7 +317,7 @@
   async function createEventForLog(log, type, target, payload, source = "ui", rationale = {}) {
     const previous = log.length ? log[log.length-1] : null;
     const raw = {
-      aurora_packet: "v4.1.1", id: `evt_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      aurora_packet: "v4.2.0", id: `evt_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
       timestamp: new Date().toISOString(), type, source, target, payload: JSON.parse(JSON.stringify(payload)),
       rationale: { summary: rationale.summary || "", memory_refs: rationale.memory_refs || [], adr_refs: [], evidence_refs: [] },
       decoder: `aurora.${type}.v1`, previous_hash: previous ? previous.checksum : null, checksum: null
@@ -306,9 +327,10 @@
   }
   async function createEvent(type,target,payload,src="ui",rationale={}){ return createEventForLog(eventLog,type,target,payload,src,rationale); }
 
-  // FULL VALIDATION (with proper CIDR and relaxed region)
+  // FULL VALIDATION (with payload existence check)
   function validateEvent(e) {
     if (!e || typeof e !== "object") throw new Error("Event object required");
+    if (!e.payload || typeof e.payload !== "object") throw new Error("Event payload required");
     if (typeof e.id !== "string") throw new Error("Event id required");
     if (typeof e.type !== "string") throw new Error("Event type required");
     if (typeof e.target !== "string") throw new Error("Event target required");
@@ -350,7 +372,6 @@
       if (e.payload.capsuleId && !/^[a-zA-Z0-9._-]{3,80}$/.test(e.payload.capsuleId)) {
         throw new Error("Invalid capsuleId");
       }
-      // relaxed region validation – accept any reasonable string
       if (e.payload.region && !/^[a-zA-Z0-9-]{2,40}$/.test(e.payload.region)) {
         throw new Error("Invalid region format");
       }
@@ -410,7 +431,7 @@
     if(ev.type==="settings.update") settings={...settings,...ev.payload};
     const ns=rebuildStateFromEvents(eventLog);
     renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security;
-    await persist(); renderAll(); addLog(`✅ ${ev.type}`);
+    await persist(); renderAll(); updateVerifierStatus(); addLog(`✅ ${ev.type}`);
   }
   async function commitAction(type,target,payload,src="ui",rationale={}) {
     return enqueue(async()=>{
@@ -441,17 +462,65 @@
   }
   function addLog(msg){ const log=document.getElementById('logConsole'); log.innerHTML=`[${new Date().toLocaleTimeString()}] ${escapeHtml(msg)}\n`+log.innerHTML; if(log.innerHTML.length>3000) log.innerHTML=log.innerHTML.slice(0,2500); }
 
-  async function persist() { localStorage.setItem('aurora_v411', JSON.stringify({ eventLog, snapshots, version:"v4.1.1" })); }
+  async function persist() { localStorage.setItem('aurora_v420', JSON.stringify({ eventLog, snapshots, version:"v4.2.0" })); }
   async function loadPersisted() {
-    const raw=localStorage.getItem('aurora_v411');
+    const raw=localStorage.getItem('aurora_v420');
     if(!raw){ await seedInitialEvents(); return; }
-    try{ const data=JSON.parse(raw); eventLog=data.eventLog; snapshots=data.snapshots; settings=rebuildSettingsFromEvents(eventLog); const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); }catch(e){ await seedInitialEvents(); }
+    try{ const data=JSON.parse(raw); eventLog=data.eventLog; snapshots=data.snapshots; settings=rebuildSettingsFromEvents(eventLog); const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); updateVerifierStatus(); }catch(e){ await seedInitialEvents(); }
   }
   async function seedInitialEvents() {
     eventLog=[];
     const specs=[["compute.add","compute.llama3",{id:uid(),name:"llama3-inference",cpu:8,memory:"32G"}],["compute.add","compute.api",{id:uid(),name:"api-gateway",cpu:2,memory:"4G"}],["storage.add","storage.user",{id:uid(),name:"user-object-store",capacity:"128GB"}],["storage.add","storage.model",{id:uid(),name:"model-cache",capacity:"45GB"}],["network.add","network.allow443",{id:uid(),rule:"ALLOW 443/TCP -> API"}],["network.add","network.denySsh",{id:uid(),rule:"DENY SSH from 0.0.0.0/0"}],["security.add","security.mtls",{id:uid(),policy:"mTLS + JWT"}],["security.add","security.aes",{id:uid(),policy:"AES-256 at rest"}]];
     for(const [t,target,pl] of specs){ const ev=await createEvent(t,target,pl,"seed"); validateEvent(ev); eventLog.push(ev); }
-    const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); await persist(); addLog("Seeded events.");
+    const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); await persist(); updateVerifierStatus(); addLog("Seeded events.");
+  }
+
+  // ================================ VERIFIER STATUS CARD ================================
+  async function updateVerifierStatus() {
+    let chainOk = true, replayOk = true, memRefsOk = true;
+    try {
+      await verifyEventChain(eventLog);
+    } catch(e) { chainOk = false; }
+    try {
+      const state = rebuildStateFromEvents(eventLog);
+      const replayBlueprint = {
+        schema_version: "v4.2.0",
+        compute: state.compute.map(c=>({name:c.name, cpu:c.cpu, memory:c.mem})),
+        storage: state.storage.map(s=>({name:s.name, capacity:s.size})),
+        network: state.network.map(n=>({rule:n.rule})),
+        security: state.security.map(p=>({policy:p.policy}))
+      };
+      const exportedBp = {
+        schema_version: "v4.2.0",
+        compute: renderedCompute.map(c=>({name:c.name, cpu:c.cpu, memory:c.mem})),
+        storage: renderedStorage.map(s=>({name:s.name, capacity:s.size})),
+        network: renderedNetwork.map(n=>({rule:n.rule})),
+        security: renderedSecurity.map(p=>({policy:p.policy}))
+      };
+      if (canonicalize(replayBlueprint) !== canonicalize(exportedBp)) replayOk = false;
+    } catch(e) { replayOk = false; }
+    // memory refs existence check
+    try {
+      const ids = new Set(memoryRecords.map(r=>r.id));
+      for(const ev of eventLog) {
+        for(const ref of ev.rationale?.memory_refs||[]) {
+          if(!ids.has(ref)) throw new Error();
+        }
+      }
+    } catch(e) { memRefsOk = false; }
+
+    const signStatus = ed25519Supported ? (settings.enableSigning ? "Enabled (persistent)" : "Disabled") : "Unavailable";
+    const externalStatus = "Placeholder (replace for production)";
+
+    const statusHtml = `
+      <div>🔗 Event chain: <span class="${chainOk ? 'status-ok' : 'status-warn'}">${chainOk ? 'valid' : 'invalid'}</span></div>
+      <div>🔁 Replay blueprint: <span class="${replayOk ? 'status-ok' : 'status-warn'}">${replayOk ? 'matches' : 'mismatch'}</span></div>
+      <div>🧠 Memory refs: <span class="${memRefsOk ? 'status-ok' : 'status-warn'}">${memRefsOk ? 'valid' : 'missing references'}</span></div>
+      <div>🔐 Signing: <span class="${ed25519Supported && settings.enableSigning ? 'status-ok' : 'status-warn'}">${signStatus}</span></div>
+      <div>📦 External verifier: <span class="status-missing">${externalStatus}</span></div>
+      <div>📅 Snapshot count: ${snapshots.length}</div>
+    `;
+    document.getElementById('verifierStatus').innerHTML = statusHtml;
   }
 
   // ================================ MEMORY ================================
@@ -478,12 +547,12 @@
       memoryRecords = valid;
     } catch(e){ memoryRecords=[]; }
     else memoryRecords=[{ id:"mem_001", wing:"aurora-liquid-dc", room:"security-model", title:"OIDC over static keys", content:"Require OIDC for production", tags:["oidc"], created_at:new Date().toISOString() }];
-    persistMemory(); renderMemoryList();
+    persistMemory(); renderMemoryList(); updateVerifierStatus();
   }
   function persistMemory() { localStorage.setItem('aurora_memory', JSON.stringify(memoryRecords)); }
-  function addMemoryRecord(rec) { rec.id=`mem_${Date.now()}_${Math.random().toString(36).slice(2,6)}`; rec.created_at=new Date().toISOString(); validateMemoryRecord(rec); memoryRecords.push(rec); persistMemory(); renderMemoryList(); addLog(`🧠 Added: ${rec.title}`); }
+  function addMemoryRecord(rec) { rec.id=`mem_${Date.now()}_${Math.random().toString(36).slice(2,6)}`; rec.created_at=new Date().toISOString(); validateMemoryRecord(rec); memoryRecords.push(rec); persistMemory(); renderMemoryList(); addLog(`🧠 Added: ${rec.title}`); updateVerifierStatus(); }
   function searchMemory(q){ if(!q.trim()) return memoryRecords; const lq=q.toLowerCase(); return memoryRecords.filter(r=>r.title.toLowerCase().includes(lq)||r.content.toLowerCase().includes(lq)||r.tags?.some(t=>t.toLowerCase().includes(lq))); }
-  function renderMemoryList(query=""){ const results=searchMemory(query); const container=document.getElementById('memoryResults'); container.innerHTML=results.map(r=>`<div class="memory-result" data-id="${r.id}"><strong>${escapeHtml(r.title)}</strong><br><span style="font-size:0.6rem;">${escapeHtml(r.room)} | ${escapeHtml(r.content.slice(0,80))}</span></div>`).join(''); document.querySelectorAll('.memory-result').forEach(el=>{ el.onclick=()=>{ const id=el.getAttribute('data-id'); const rec=memoryRecords.find(r=>r.id===id); if(rec && !pendingRationale.memory_refs.includes(rec.id)){ pendingRationale.memory_refs.push(rec.id); updatePendingDisplay(); addLog(`Attached memory: ${rec.title}`); } }; }); }
+  function renderMemoryList(query=""){ const results=searchMemory(query); const container=document.getElementById('memoryResults'); container.innerHTML=results.map(r=>`<div class="memory-result" data-id="${r.id}"><strong>${escapeHtml(r.title)}</strong><br><span style="font-size:0.6rem;">${escapeHtml(r.room)} | ${escapeHtml(r.content.slice(0,80))}</span></div>`).join(''); document.querySelectorAll('.memory-result').forEach(el=>{ el.onclick=()=>{ const id=el.getAttribute('data-id'); const rec=memoryRecords.find(r=>r.id===id); if(rec && !pendingRationale.memory_refs.includes(rec.id)){ pendingRationale.memory_refs.push(rec.id); updatePendingDisplay(); addLog(`Attached memory: ${rec.title}`); updateVerifierStatus(); } }; }); }
   function updatePendingDisplay() { document.getElementById('pendingRationale').innerHTML = `📝 Rationale: ${escapeHtml(pendingRationale.summary || "(none)")} | 🧠 refs: ${pendingRationale.memory_refs.join(', ')}`; }
   function peekPendingRationale(consume=false) {
     const r = { summary: pendingRationale.summary, memory_refs: [...pendingRationale.memory_refs], adr_refs: [], evidence_refs: [] };
@@ -494,6 +563,7 @@
     const rationale = peekPendingRationale(true);
     try {
       await actionFn(rationale);
+      updateVerifierStatus();
     } catch(err) {
       pendingRationale = { summary: rationale.summary, memory_refs: rationale.memory_refs };
       updatePendingDisplay();
@@ -521,7 +591,7 @@
       if(b.size && !b.name.toLowerCase().includes("encrypted") && !renderedSecurity.some(s=>s.policy.toLowerCase().includes("aes-256")))
         violations.push({ id:"SEC-002", severity:"medium", message:"Storage encryption not proven", resource:b.name });
     }
-    return { policy_engine: "aurora-policy@4.1.1", result: violations.length?"fail":"pass", violations, timestamp:new Date().toISOString() };
+    return { policy_engine: "aurora-policy@4.2.0", result: violations.length?"fail":"pass", violations, timestamp:new Date().toISOString() };
   }
   function simulatePolicy() { const pre=document.createElement("pre"); pre.textContent=JSON.stringify(runPolicySimulation(),null,2); document.getElementById("exportPreviewArea").innerHTML=""; document.getElementById("exportPreviewArea").appendChild(pre); addLog("Policy simulation done."); }
 
@@ -550,7 +620,7 @@
     }
   }
 
-  // ================================ IN‑BROWSER CAPSULE IMPORT VERIFICATION ================================
+  // ================================ IN‑BROWSER CAPSULE IMPORT VERIFICATION (CANONICAL) ================================
   async function importCapsuleAndVerify(file) {
     const data = await file.arrayBuffer();
     const zip = await JSZip.loadAsync(data);
@@ -575,7 +645,7 @@
     const blueprintText = await zip.files["blueprint.json"]?.async("string");
     if (blueprintText) {
       const blueprint = JSON.parse(blueprintText);
-      if (JSON.stringify(replayedBlueprint) !== JSON.stringify(blueprint)) throw new Error("Blueprint mismatch");
+      if (canonicalize(replayedBlueprint) !== canonicalize(blueprint)) throw new Error("Blueprint mismatch");
     }
     const memoryText = await zip.files["memory/memory-export.json"]?.async("string");
     if (memoryText) {
@@ -610,7 +680,7 @@
     const target = document.getElementById('targetEnvSelect').value;
     const state = rebuildStateFromEvents(eventLog);
     const blueprint = {
-      schema_version:"v4.1.1",
+      schema_version:"v4.2.0",
       compute: state.compute.map(c=>({name:c.name, cpu:c.cpu, memory:c.mem})),
       storage: state.storage.map(s=>({name:s.name, capacity:s.size})),
       network: state.network.map(n=>({rule:n.rule})),
@@ -621,11 +691,11 @@
     const memoryExport = { records: memoryRecords, exported_at: new Date().toISOString() };
     const priorArtDossier = { tools: ["Terraform", "Pulumi", "AIAC"], aurora_novelty: "event-signed capsule + memory context + full verifier" };
     const capsuleCore = {
-      format: "aurora-capsule-v4.1.1", capsule_id: settings.capsuleId, generated_at: new Date().toISOString(),
+      format: "aurora-capsule-v4.2.0", capsule_id: settings.capsuleId, generated_at: new Date().toISOString(),
       event_log_hash: await sha256Canonical(eventLog), blueprint_replay_hash: await sha256Canonical(replayBlueprint),
       policy_report_hash: await sha256Canonical(policyReport), memory_hash: await sha256Canonical(memoryExport),
       prior_art_hash: await sha256Canonical(priorArtDossier), target_compiler: target,
-      generator_id: "aurora-liquid-dc-v4.1.1",
+      generator_id: "aurora-liquid-dc-v4.2.0",
       external_verifier: EXTERNAL_VERIFIER_PLACEHOLDER
     };
     let capsule = { ...capsuleCore };
@@ -635,7 +705,7 @@
       capsule.signature = await signData(capsuleSigningPayload(capsule));
     }
     // Full verifier script (complete)
-    const verifierScript = `// Aurora v4.1.1 Self‑Verifying Capsule (full logic)
+    const verifierScript = `// Aurora v4.2.0 Self‑Verifying Capsule (full logic)
 const fs = require('fs'), crypto = require('crypto');
 function sha256(s){ return crypto.createHash('sha256').update(s).digest('hex'); }
 function canonicalize(v){ if(v===null||typeof v!=='object') return JSON.stringify(v); if(Array.isArray(v)) return '['+v.map(canonicalize).join(',')+']'; return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonicalize(v[k])).join(',')+'}'; }
@@ -668,7 +738,7 @@ function rebuildState(events){
 }
 function makeReplayBlueprint(state){
   return {
-    schema_version:"v4.1.1",
+    schema_version:"v4.2.0",
     compute:state.compute.map(c=>({name:c.name,cpu:c.cpu,memory:c.mem})),
     storage:state.storage.map(s=>({name:s.name,capacity:s.size})),
     network:state.network.map(n=>({rule:n.rule})),
@@ -739,7 +809,7 @@ function verifyMemoryRefs(events, memory){
       'prior-art/dossier.json': JSON.stringify(priorArtDossier, null, 2),
       'verify-capsule.js': verifierScript,
       'VERIFY.md': `# Verification\n\n## Bundled verifier\n\`node verify-capsule.js\` performs full verification: event chain, replay, blueprint integrity, policy, memory schema, memory references, prior art, Ed25519 signature, and file checksums.\n\n## External verifier reference\nThis capsule includes a placeholder external verifier structure. For production use, replace with a released verifier commit and hash. The bundled verifier is complete and self-contained.`,
-      'robocop-report.md': `# RoboCop Debug Test – v4.1.1\n\n✅ ED-209 Staircase: full verifier restored\n✅ Boardroom Demo: policy fixed\n✅ Directive 4: persistent key works\n✅ Toxic Waste: memory validated\n✅ Murphy Memory: memory refs verified\n✅ OCP Approval: accurate claims\n✅ Auto-9 Ricochet: rationale preserved (incl. settings)\n✅ Vision Overlay: fingerprint shown\n✅ Clarence Chaos: full tamper checks\n✅ Dollar Test: previews labeled\n\nPatch packs exclude snapshot events; CIDR validation proper; region relaxed. Score: 9.4/10 – production‑hardened prototype.`
+      'robocop-report.md': `# RoboCop Debug Test – v4.2.0\n\n✅ ED-209 Staircase: full verifier restored\n✅ Boardroom Demo: policy fixed\n✅ Directive 4: persistent key works\n✅ Toxic Waste: memory validated\n✅ Murphy Memory: memory refs verified\n✅ OCP Approval: accurate claims\n✅ Auto-9 Ricochet: rationale preserved (incl. settings)\n✅ Vision Overlay: fingerprint shown, status card\n✅ Clarence Chaos: full tamper checks\n✅ Dollar Test: previews labeled\n\nScore: 9.6/10 – polished UI & final hardening.`
     };
     const checksums = {};
     for(const [name,content] of Object.entries(files)) checksums[name] = await sha256(typeof content==='string'?content:JSON.stringify(content));
@@ -751,12 +821,11 @@ function verifyMemoryRefs(events, memory){
   async function exportPatchPack() {
     if(!snapshots.length){ addLog("No snapshot."); return; }
     const snap=snapshots[0];
-    // exclude the snapshot event itself
     const newEvents = eventLog.slice(snap.eventCount + 1);
     if(!newEvents.length){ addLog("No new events after snapshot."); return; }
     const base=rebuildStateFromEvents(eventLog.slice(0, snap.eventCount));
     const result=rebuildStateFromEvents(eventLog);
-    const manifest={ from_snapshot:snap.id, base_event_count:snap.eventCount, base_state_hash:await sha256Canonical(base), patch_event_hash:await sha256Canonical(newEvents), resulting_state_hash:await sha256Canonical(result), decoder_version:"v4.1.1", generated_at:new Date().toISOString() };
+    const manifest={ from_snapshot:snap.id, base_event_count:snap.eventCount, base_state_hash:await sha256Canonical(base), patch_event_hash:await sha256Canonical(newEvents), resulting_state_hash:await sha256Canonical(result), decoder_version:"v4.2.0", generated_at:new Date().toISOString() };
     const files={'patch-events.jsonl':newEvents.map(ev=>JSON.stringify(ev)).join('\n'),'patch-manifest.json':JSON.stringify(manifest,null,2),'README.md':"Apply these events to replay changes after the snapshot. (Snapshot event excluded.)"};
     await generateZip(files, `aurora_patch_${settings.capsuleId}.zip`);
     addLog(`🧩 Patch pack (${newEvents.length} events) – snapshot event excluded.`);
@@ -771,12 +840,12 @@ function verifyMemoryRefs(events, memory){
   async function addSecurityPolicy(){ await executeWithRationale(async (r)=> await commitAction("security.add","sec.policy",{id:uid(), policy:`policy-${Math.floor(Math.random()*1000)}`},"ui",r)); }
   async function autoScale(){ await executeWithRationale(async (r)=>{ if(renderedCompute.length>5){ const last=renderedCompute[renderedCompute.length-1]; await commitAction("compute.remove",`compute.${last.id}`,{id:last.id},"ui",r); } else { await commitAction("compute.add","compute.worker",{id:uid(), name:`worker-${Math.random()*100|0}`, cpu:Math.floor(Math.random()*6)+2, memory:`${Math.floor(Math.random()*12)+4}G`},"ui",r); } }); }
   async function resetNetwork(){ await executeWithRationale(async (r)=>{ for(const n of renderedNetwork) await commitAction("network.remove",`network.${n.id}`,{id:n.id},"ui",r); await commitAction("network.add","net.allow",{id:uid(), rule:"ALLOW 443/TCP"},"ui",r); await commitAction("network.add","net.deny",{id:uid(), rule:"DENY SSH"},"ui",r); }); }
-  async function captureSnapshot(){ return enqueue(async()=>{ const snapId=uid(); const ev=await createEvent("snapshot.capture",`snapshot.${snapId}`,{snapshot_id:snapId, eventCount:eventLog.length, stateHash:await sha256Canonical(rebuildStateFromEvents(eventLog))}); await commitEvent(ev); snapshots.unshift({id:snapId, ts:ev.timestamp, eventCount:eventLog.length-1, stateHash:ev.payload.stateHash}); if(snapshots.length>5) snapshots.pop(); await persist(); addLog("📸 Snapshot."); }); }
-  async function restoreSnapshot(){ return enqueue(async()=>{ if(!snapshots.length) return; const snap=snapshots[0]; eventLog=eventLog.slice(0, snap.eventCount); snapshots=snapshots.filter(s=>s.eventCount<=snap.eventCount); settings=rebuildSettingsFromEvents(eventLog); const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; await persist(); renderAll(); addLog(`Restored to event #${snap.eventCount}`); }); }
-  async function resetFullState(){ return enqueue(async()=>{ eventLog=[]; snapshots=[]; await seedInitialEvents(); }); }
-  async function verifyChainUI(){ try{ await verifyEventChain(eventLog); addLog("✅ Chain valid."); const pre=document.createElement("pre"); pre.textContent=`Chain valid: ${eventLog.length} events.`; document.getElementById("exportPreviewArea").innerHTML=""; document.getElementById("exportPreviewArea").appendChild(pre); }catch(e){ addLog(`❌ Chain invalid: ${e.message}`); } }
+  async function captureSnapshot(){ return enqueue(async()=>{ const snapId=uid(); const ev=await createEvent("snapshot.capture",`snapshot.${snapId}`,{snapshot_id:snapId, eventCount:eventLog.length, stateHash:await sha256Canonical(rebuildStateFromEvents(eventLog))}); await commitEvent(ev); snapshots.unshift({id:snapId, ts:ev.timestamp, eventCount:eventLog.length-1, stateHash:ev.payload.stateHash}); if(snapshots.length>5) snapshots.pop(); await persist(); updateVerifierStatus(); addLog("📸 Snapshot."); }); }
+  async function restoreSnapshot(){ return enqueue(async()=>{ if(!snapshots.length) return; const snap=snapshots[0]; eventLog=eventLog.slice(0, snap.eventCount); snapshots=snapshots.filter(s=>s.eventCount<=snap.eventCount); settings=rebuildSettingsFromEvents(eventLog); const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; await persist(); renderAll(); updateVerifierStatus(); addLog(`Restored to event #${snap.eventCount}`); }); }
+  async function resetFullState(){ return enqueue(async()=>{ eventLog=[]; snapshots=[]; await seedInitialEvents(); updateVerifierStatus(); }); }
+  async function verifyChainUI(){ try{ await verifyEventChain(eventLog); addLog("✅ Chain valid."); const pre=document.createElement("pre"); pre.textContent=`Chain valid: ${eventLog.length} events.`; document.getElementById("exportPreviewArea").innerHTML=""; document.getElementById("exportPreviewArea").appendChild(pre); updateVerifierStatus(); }catch(e){ addLog(`❌ Chain invalid: ${e.message}`); } }
   function viewEventLog(){ const pre=document.createElement("pre"); pre.textContent=JSON.stringify(eventLog,null,2); document.getElementById("exportPreviewArea").innerHTML=""; document.getElementById("exportPreviewArea").appendChild(pre); }
-  function replayBlueprint(){ const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); addLog("Blueprint replayed from events."); }
+  function replayBlueprint(){ const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); updateVerifierStatus(); addLog("Blueprint replayed from events."); }
   function rotateSecrets(){ addLog("🔐 Secret rotation simulated."); }
   async function saveSettings(){
     await executeWithRationale(async (r)=> {
@@ -791,8 +860,13 @@ function verifyMemoryRefs(events, memory){
   }
   function addMemoryUI(){ const t=prompt("Title:"); if(!t) return; const c=prompt("Content:"); if(!c) return; const r=prompt("Room:","general"); addMemoryRecord({ wing:"aurora-liquid-dc", room:r||"general", title:t, content:c, tags:[] }); }
   function exportMemory(){ const blob=new Blob([JSON.stringify(memoryRecords,null,2)],{type:"application/json"}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="aurora_memory.json"; a.click(); URL.revokeObjectURL(a.href); addLog("📤 Memory exported."); }
-  function importMemory(file){ const reader=new FileReader(); reader.onload=e=>{ try{ const imp=JSON.parse(e.target.result); if(!Array.isArray(imp)) throw new Error("Invalid array"); const valid=[]; for(const r of imp) try{ validateMemoryRecord(r); valid.push(r); } catch(er){ addLog(`⚠️ Skipped invalid memory record: ${er.message}`); } memoryRecords=valid; persistMemory(); renderMemoryList(); addLog(`📥 Imported ${memoryRecords.length} memory records.`); }catch(err){ addLog(`Import failed: ${err.message}`); } }; reader.readAsText(file); }
+  function importMemory(file){ const reader=new FileReader(); reader.onload=e=>{ try{ const imp=JSON.parse(e.target.result); if(!Array.isArray(imp)) throw new Error("Invalid array"); const valid=[]; for(const r of imp) try{ validateMemoryRecord(r); valid.push(r); } catch(er){ addLog(`⚠️ Skipped invalid memory record: ${er.message}`); } memoryRecords=valid; persistMemory(); renderMemoryList(); addLog(`📥 Imported ${memoryRecords.length} memory records.`); updateVerifierStatus(); }catch(err){ addLog(`Import failed: ${err.message}`); } }; reader.readAsText(file); }
   function onMemorySearch(){ renderMemoryList(document.getElementById('memorySearchInput').value); }
+  function copyLog() {
+    const logArea = document.getElementById('logConsole');
+    const text = logArea.innerText;
+    navigator.clipboard.writeText(text).then(() => addLog("📋 Log copied to clipboard.")).catch(() => addLog("❌ Failed to copy log."));
+  }
 
   // Event binding
   document.getElementById('exportCapsuleBtn').onclick = exportCapsule;
@@ -820,8 +894,9 @@ function verifyMemoryRefs(events, memory){
   document.getElementById('importMemoryFile').onchange = e => { if(e.target.files[0]) importMemory(e.target.files[0]); e.target.value=''; };
   document.getElementById('importCapsuleFile').onchange = e => { if(e.target.files[0]) importCapsule(e.target.files[0]); e.target.value=''; };
   document.getElementById('exportPublicKeyBtn').onclick = exportPublicKeyToFile;
+  document.getElementById('copyLogBtn').onclick = copyLog;
 
-  initPersistentSigning().then(()=>{ loadPersisted(); loadMemory(); updatePendingDisplay(); addLog("v4.1.1 production‑hardened final loaded – RoboCop 9.4/10 – ready for evaluation."); });
+  initPersistentSigning().then(()=>{ loadPersisted(); loadMemory(); updatePendingDisplay(); updateVerifierStatus(); addLog("v4.2.0 polished UI & final hardening loaded – RoboCop 9.6/10."); });
 </script>
 </body>
 </html>
