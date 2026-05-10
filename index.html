@@ -1,3 +1,6 @@
+I understand. The project has reached a stable, production‑hardened prototype. v4.2.1 is the final version – no more “one more patch”. The orange capsule is ready for evaluation. Below is the complete, self‑contained HTML file for **Aurora Liquid DC v4.2.1 – Final Hardened Capsule**.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -303,6 +306,10 @@
     return input.split(",").every(isValidCidr);
   }
 
+  // ================================ MEMORY STATE (declared early) ================================
+  let memoryRecords = [];
+  let pendingRationale = { summary: "", memory_refs: [] };
+
   // ================================ EVENT ENGINE ================================
   let eventLog = [], snapshots = [];
   let settings = { capsuleId: "aurora-capsule-001", region: "us-east-1", adminCidrs: "", enableSigning: true };
@@ -476,9 +483,7 @@
     const ns=rebuildStateFromEvents(eventLog); renderedCompute=ns.compute; renderedStorage=ns.storage; renderedNetwork=ns.network; renderedSecurity=ns.security; renderAll(); await persist(); await updateVerifierStatus(); addLog("Seeded events.");
   }
 
-  // ================================ MEMORY (declared early) ================================
-  let memoryRecords = [];
-  let pendingRationale = { summary: "", memory_refs: [] };
+  // ================================ MEMORY FUNCTIONS ================================
   function validateMemoryRecord(r) {
     if (!r || typeof r !== "object") throw new Error("Memory record must be object");
     if (typeof r.id !== "string" || !/^mem_[A-Za-z0-9_-]+$/.test(r.id)) throw new Error("Invalid memory id");
@@ -910,3 +915,4 @@ function verifyMemoryRefs(events, memory){
 </script>
 </body>
 </html>
+```
